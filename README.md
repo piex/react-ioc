@@ -5,8 +5,8 @@ Hierarchical Dependency Injection for React.
 ## Install
 
 ```bash
-npm install react-piex
-yarn add react-piex
+$ npm install react-piex
+$ yarn add react-piex
 ```
 
 ## Example

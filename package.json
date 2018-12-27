@@ -1,0 +1,75 @@
+{
+  "name": "react-ioc",
+  "version": "0.0.1",
+  "description": "Hierarchical Dependency Injection with new React 16 Context API",
+  "main": "dist/index.js",
+  "module": "dist/index.esm.js",
+  "typings": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rimraf dist/* && rollup -c && copyfiles -f src/index.d.ts src/index.js.flow dist --silent",
+    "test": "jest"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "prettier --write",
+      "git add"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/piex/react-ioc.git"
+  },
+  "keywords": [
+    "di",
+    "ioc",
+    "dependency",
+    "injection",
+    "container",
+    "inversion",
+    "hierarchical",
+    "decorators",
+    "react"
+  ],
+  "license": "MIT",
+  "author": "Mervyn Zhang",
+  "bugs": {
+    "url": "https://github.com/piex/react-ioc/issues"
+  },
+  "homepage": "https://github.com/piex/react-ioc#readme",
+  "dependencies": {
+    "react": "^16.7.0",
+    "reflect-metadata": "^0.1.12",
+    "rxjs": "^6.3.3"
+  },
+  "devDependencies": {
+    "@types/jest": "^23.3.10",
+    "@types/node": "^10.12.18",
+    "@types/react": "^16.7.18",
+    "copyfiles": "^2.1.0",
+    "deepmerge": "^3.0.0",
+    "husky": "^1.2.1",
+    "jest": "^23.6.0",
+    "lint-staged": "^8.1.0",
+    "rimraf": "^2.6.2",
+    "rollup": "^0.68.2",
+    "rollup-plugin-commonjs": "^9.2.0",
+    "rollup-plugin-filesize": "^5.0.1",
+    "rollup-plugin-node-resolve": "^3.4.0",
+    "rollup-plugin-prettier": "^0.5.0",
+    "rollup-plugin-replace": "^2.1.0",
+    "rollup-plugin-terser": "^3.0.0",
+    "rollup-plugin-typescript2": "^0.18.0",
+    "ts-jest": "^23.10.5",
+    "tslib": "^1.9.3",
+    "tslint": "^5.12.0",
+    "typescript": "^3.2.2"
+  }
+}

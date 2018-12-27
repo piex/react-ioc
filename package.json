@@ -1,5 +1,5 @@
 {
-  "name": "react-ioc",
+  "name": "@piex/react-ioc",
   "version": "0.0.1",
   "description": "Hierarchical Dependency Injection with new React 16 Context API",
   "main": "dist/index.js",

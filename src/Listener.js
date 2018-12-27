@@ -17,7 +17,10 @@ export const Listener = (target, key) => {
     function update(...args) {
       keySub$.next(...args);
     }
-    bs$.next(Object.assign({}, v, { [key]: update }));
+
+    if (typeof v[key] === 'undefined') {
+      bs$.next(Object.assign({}, v, { [key]: update }));
+    }
   });
 
   bs$$.unsubscribe();

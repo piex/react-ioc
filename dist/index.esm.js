@@ -113,7 +113,9 @@ var Listener = function(target, key) {
       }
       keySub$.next.apply(keySub$, args);
     }
-    bs$.next(Object.assign({}, v, ((_a = {}), (_a[key] = update), _a)));
+    if (typeof v[key] === 'undefined') {
+      bs$.next(Object.assign({}, v, ((_a = {}), (_a[key] = update), _a)));
+    }
   });
   bs$$.unsubscribe();
   var get = function() {

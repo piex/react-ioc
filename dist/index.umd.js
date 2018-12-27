@@ -53,7 +53,7 @@
         },
         register: function (key, value) {
             this.data[key] = value;
-        }
+        },
     };
 
     var subjects = {
@@ -68,7 +68,7 @@
             else {
                 this.data[className] = value;
             }
-        }
+        },
     };
 
     var Provider = function (name) {
@@ -83,7 +83,7 @@
                 function Regist() {
                     var _this = _super !== null && _super.apply(this, arguments) || this;
                     _this.state = {
-                        context: {}
+                        context: {},
                     };
                     return _this;
                 }
@@ -91,7 +91,7 @@
                     var _this = this;
                     subjects.get(Cmpt.name).subscribe(function (data) {
                         _this.setState({
-                            context: data
+                            context: data,
                         });
                     });
                 };
@@ -2829,7 +2829,9 @@
                 }
                 keySub$.next.apply(keySub$, args);
             }
-            bs$.next(Object.assign({}, v, (_a = {}, _a[key] = update, _a)));
+            if (typeof v[key] === 'undefined') {
+                bs$.next(Object.assign({}, v, (_a = {}, _a[key] = update, _a)));
+            }
         });
         bs$$.unsubscribe();
         var get = function () {
@@ -2869,7 +2871,7 @@
                 Ins.prototype.render = function () {
                     var Context = ioc.get(name);
                     if (Context) {
-                        return (React__default.createElement(Context.Consumer, null, this.renderContext));
+                        return React__default.createElement(Context.Consumer, null, this.renderContext);
                     }
                     return null;
                 };

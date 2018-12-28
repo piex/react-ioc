@@ -12,12 +12,12 @@ const typescriptPlugin = () =>
   typescript({
     tsconfigOverride: {
       compilerOptions: {
-        target: 'es5',
+        target: 'esnext',
         module: 'es2015',
       },
       include: ['src'],
     },
-    include: ['src/**/*.js', 'src/**/*.ts'],
+    include: ['src/**/*.ts', 'src/**/*.tsx'],
     exclude: ['src/**/*.d.ts'],
   });
 
@@ -34,7 +34,7 @@ const terserPlugin = () =>
   });
 
 const es6 = {
-  input: 'src/index.js',
+  input: 'src/index.ts',
   external: ['react', 'hoist-non-react-statics', 'reflect-metadata', 'tslib'],
   output: {
     file: pkg.module,
@@ -44,7 +44,7 @@ const es6 = {
 };
 
 const cjs = {
-  input: 'src/index.js',
+  input: 'src/index.ts',
   external: ['react', 'hoist-non-react-statics', 'reflect-metadata', 'tslib'],
   output: {
     file: pkg.main,
@@ -54,7 +54,7 @@ const cjs = {
 };
 
 const umd = {
-  input: 'src/index.js',
+  input: 'src/index.ts',
   external: ['react'],
   output: {
     file: pkg.main.replace('.js', '.umd.js'),

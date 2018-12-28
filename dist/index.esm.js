@@ -1,165 +1,243 @@
-import { __extends, __assign } from 'tslib';
 import React, { createContext, Component } from 'react';
-import { BehaviorSubject, Subject } from 'rxjs';
 
 var ioc = {
   data: {},
-  get: function(key) {
+  get(key) {
     return this.data[key];
   },
-  register: function(key, value) {
+  register(key, value) {
     this.data[key] = value;
   },
 };
 
-var subjects = {
+const subjects = {
   data: {},
-  get: function(className) {
-    return this.data[className];
+  get(registName) {
+    return this.data[registName];
   },
-  set: function(className, value) {
-    if (typeof this.data[className] != 'undefined') {
-      throw new Error(className + ' is already exists.');
+  set(registName, subject) {
+    if (typeof this.data[registName] !== 'undefined') {
+      throw new Error(`${registName} is already exists.`);
     } else {
-      this.data[className] = value;
+      this.data[registName] = subject;
     }
   },
 };
 
-var Provider = function(name) {
+const Provider = name => {
   if (typeof ioc.get(name) !== 'undefined') {
-    throw new Error(name + ' \u5DF2\u88AB\u6CE8\u518C\uFF01');
+    throw new Error(`${name} is already regist.`);
   }
-  var Context = createContext({});
+  const Context = createContext({});
   ioc.register(name, Context);
-  return function(Cmpt) {
-    return /** @class */ (function(_super) {
-      __extends(Regist, _super);
-      function Regist() {
-        var _this = (_super !== null && _super.apply(this, arguments)) || this;
-        _this.state = {
+  return Cmpt => {
+    return class Regist extends Component {
+      constructor() {
+        super(...arguments);
+        this.state = {
           context: {},
         };
-        return _this;
       }
-      Regist.prototype.componentDidMount = function() {
-        var _this = this;
-        subjects.get(Cmpt.name).subscribe(function(data) {
-          _this.setState({
+      componentDidMount() {
+        const subject$ = subjects.get(Cmpt.name);
+        subject$.subscribe(data => {
+          this.setState({
             context: data,
           });
         });
-      };
-      Regist.prototype.render = function() {
+      }
+      render() {
         return React.createElement(
           Context.Provider,
           { value: this.state.context },
-          React.createElement(Cmpt, __assign({}, this.props))
+          React.createElement(Cmpt, Object.assign({}, this.props))
         );
-      };
-      return Regist;
-    })(Component);
+      }
+    };
   };
 };
 
-var Context = function(target, key, descriptor) {
-  var name = target.constructor.name;
-  var value = descriptor.initializer();
-  if (!subjects.get(name)) {
-    var bs$_1 = new BehaviorSubject({});
-    subjects.set(name, bs$_1);
+class Observer {
+  constructor(destinationOrNext) {
+    this.isStopped = false;
+    this.destination = this.safeObserver(destinationOrNext);
   }
-  var bs$ = subjects.get(name);
-  function update(value) {
-    var context$$ = bs$.subscribe(function(v) {
-      var _a;
-      if (v[key] !== value) {
-        bs$.next(Object.assign({}, v, ((_a = {}), (_a[key] = value), _a)));
+  safeObserver(observerOrNext) {
+    return {
+      next: observerOrNext,
+    };
+  }
+  next(args) {
+    if (!this.isStopped && this.next) {
+      try {
+        this.destination.next(args); // send next
+      } catch (err) {
+        this.unsubscribe();
+        throw err;
+      }
+    }
+  }
+  error(err) {
+    if (!this.isStopped && this.error) {
+      try {
+        this.destination.error(err); // send error
+      } catch (anotherError) {
+        this.unsubscribe();
+        throw anotherError;
+      }
+      this.unsubscribe();
+    }
+  }
+  complete() {
+    if (!this.isStopped && this.complete) {
+      // 先判斷是否停止過
+      try {
+        this.destination.complete(); // send complete
+      } catch (err) {
+        this.unsubscribe();
+        throw err;
+      }
+      this.unsubscribe(); // unsubscribe after send complete
+    }
+  }
+  unsubscribe() {
+    this.isStopped = true;
+  }
+}
+
+class Subject {
+  constructor() {
+    this.closed = false;
+    this.observers = [];
+  }
+  next(args) {
+    if (!this.closed) {
+      this.observers.forEach(observer => observer.next(args));
+    }
+  }
+  subscribe(observerOrNext) {
+    const observer = new Observer(observerOrNext);
+    this.observers.push(observer);
+    return observer;
+  }
+  unsubscribe() {
+    this.closed = true;
+  }
+}
+
+class BehaviorSubject extends Subject {
+  constructor(store) {
+    super();
+    this.store = store;
+  }
+  get value() {
+    return this.getValue();
+  }
+  getValue() {
+    if (this.closed) {
+      throw new Error('subject has been closed.');
+    } else {
+      return this.store;
+    }
+  }
+  next(value) {
+    this.store = value;
+    super.next(value);
+  }
+  subscribe(observerOrNext) {
+    const observer = super.subscribe(observerOrNext);
+    observer.next(this.store);
+    return observer;
+  }
+}
+
+const Context = (target, key, descriptor) => {
+  const name = target.constructor.name;
+  let value = descriptor.initializer();
+  if (!subjects.get(name)) {
+    subjects.set(name, new BehaviorSubject({}));
+  }
+  const bs$ = subjects.get(name);
+  function update(vs) {
+    const context$$ = bs$.subscribe(v => {
+      if (v[key] !== vs) {
+        bs$.next(Object.assign({}, v, { [key]: vs }));
       }
     });
     context$$.unsubscribe();
   }
-  // init context
   update(value);
-  var get = function() {
+  const get = () => {
     return value;
   };
-  var set = function(newVal) {
+  const set = newVal => {
     update(newVal);
     value = newVal;
   };
   return {
-    get: get,
-    set: set,
-    enumerable: false,
     configurable: true,
+    enumerable: false,
+    get,
+    set,
   };
 };
 
-var Listener = function(target, key) {
-  var name = target.constructor.name;
+const Listener = (target, key) => {
+  const name = target.constructor.name;
   if (!subjects.get(name)) {
-    var bs$_1 = new BehaviorSubject({});
-    subjects.set(name, bs$_1);
+    subjects.set(name, new BehaviorSubject({}));
   }
-  var bs$ = subjects.get(name);
-  var keySub$ = new Subject();
-  var bs$$ = bs$.subscribe(function(v) {
-    var _a;
-    function update() {
-      var args = [];
-      for (var _i = 0; _i < arguments.length; _i++) {
-        args[_i] = arguments[_i];
-      }
-      keySub$.next.apply(keySub$, args);
+  const bs$ = subjects.get(name);
+  const keySub$ = new Subject();
+  const bs$$ = bs$.subscribe(v => {
+    function update(args) {
+      keySub$.next(args);
     }
     if (typeof v[key] === 'undefined') {
-      bs$.next(Object.assign({}, v, ((_a = {}), (_a[key] = update), _a)));
+      bs$.next(Object.assign({}, v, { [key]: update }));
     }
   });
   bs$$.unsubscribe();
-  var get = function() {
+  const get = () => {
     return keySub$;
   };
-  var set = function() {
-    console.log('can note set listen: ' + key + ", it's readonly.");
+  const set = () => {
+    // tslint:disable-next-line
+    console.log(`can note set listen: ${key}, it's readonly.`);
   };
   return {
-    get: get,
-    set: set,
-    enumerable: false,
     configurable: true,
+    enumerable: false,
+    get,
+    set,
   };
 };
 
-var Consumer = function(name, dependencies) {
-  return function(Cmpt) {
-    return /** @class */ (function(_super) {
-      __extends(Ins, _super);
-      function Ins() {
-        var _this = (_super !== null && _super.apply(this, arguments)) || this;
-        _this.renderContext = function(context) {
-          var props = {};
+const Consumer = (name, dependencies) => {
+  return Cmpt => {
+    return class Instance extends Component {
+      constructor() {
+        super(...arguments);
+        this.renderContext = context => {
+          let props = {};
           if (dependencies) {
-            dependencies.forEach(function(key) {
+            dependencies.forEach(key => {
               props[key] = context[key];
             });
           } else {
             props = context;
           }
-          return React.createElement(Cmpt, __assign({}, props));
+          return React.createElement(Cmpt, Object.assign({}, props));
         };
-        return _this;
       }
-      Ins.prototype.render = function() {
-        var Context = ioc.get(name);
+      render() {
+        const Context = ioc.get(name);
         if (Context) {
           return React.createElement(Context.Consumer, null, this.renderContext);
         }
         return null;
-      };
-      return Ins;
-    })(Component);
+      }
+    };
   };
 };
 
